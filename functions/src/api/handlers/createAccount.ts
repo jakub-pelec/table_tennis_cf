@@ -13,13 +13,13 @@ const baseUserDocument = {
 }
 
 export default async(request: express.Request, response: express.Response): Promise<express.Response> => {
-    const {body: {email, password, username}} = request;
+    const {body: {email, password, username, token}} = request;
     try {
-        const {id: firestoreID} = await admin.firestore().collection(COLLECTIONS.USERS).add({username, ...baseUserDocument});
+        const {id: firestoreID} = await admin.firestore().collection(COLLECTIONS.USERS).add({username, ...baseUserDocument, token});
         const {uid: authID} = await admin.auth().createUser({
-            email: email,
-            password: password,
-            disabled: false,
+            email,
+            password,
+            disabled: false
         });
         await admin.auth().setCustomUserClaims(authID, {firestoreID});
         return response.status(200).send(firestoreID);

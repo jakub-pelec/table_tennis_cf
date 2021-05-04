@@ -4,6 +4,7 @@ export interface UserDocument {
     loses: number,
     titles: string[],
     duringGame: boolean,
+    token: string
 }
 
 export interface ChallengeDocument {
