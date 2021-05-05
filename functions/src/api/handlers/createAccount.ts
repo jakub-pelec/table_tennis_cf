@@ -22,7 +22,7 @@ export default async(request: express.Request, response: express.Response): Prom
             disabled: false
         });
         await admin.auth().setCustomUserClaims(authID, {firestoreID});
-        return response.status(200).send(firestoreID);
+        return response.status(200).send({firestoreID});
     } catch(e) {
         return response.status(403).send('Something went wrong');
     }
