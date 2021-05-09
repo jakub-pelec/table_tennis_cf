@@ -5,7 +5,8 @@ export interface UserDocument {
     titles: string[],
     duringGame: boolean,
     token: string,
-    username: string
+    username: string,
+    hasPendingChallenge: boolean
 }
 
 export interface ChallengeDocument {

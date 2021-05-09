@@ -1,7 +1,9 @@
 import * as express from 'express';
 import * as admin from 'firebase-admin';
 import { COLLECTIONS } from '../../constants/collections';
+import { RESPONSE_CODES } from '../../constants/responseCodes';
 import { UserDocument } from '../../typings/documents';
+import { createResponseMessage } from '../../utils/createResponseMessage';
 
 export default async(request: express.Request, response: express.Response) => {
     const {body: {from, to}} = request;
@@ -10,13 +12,13 @@ export default async(request: express.Request, response: express.Response) => {
         const toRef = admin.firestore().collection(COLLECTIONS.USERS).doc(to);
         const fromData = await (await fromRef.get()).data() as UserDocument;
         const toData = await (await toRef.get()).data() as UserDocument;
-        const {duringGame: isFromPlaying, username} = fromData;
-        const {duringGame: isToPlaying, token} = toData;
-        if(isFromPlaying || isToPlaying) {
-            return response.status(403).send({code: 'error', message: 'one or more of users are currently in game'});
+        const {duringGame: isFromPlaying, hasPendingChallenge: hasPendingChallengeFrom, username} = fromData;
+        const {duringGame: isToPlaying, hasPendingChallenge: hasPendingChallengeTo, token} = toData;
+        if(isFromPlaying || isToPlaying || hasPendingChallengeTo || hasPendingChallengeFrom) {
+            return response.status(403).send(createResponseMessage({code: RESPONSE_CODES.FIRESTORE_ERROR, message: 'user is currently in game or has pending challenge'}));
         };
-        await fromRef.update({duringGame: true});
-        await toRef.update({duringGame: true});
+        await fromRef.update({hasPendingChallenge: true});
+        await toRef.update({hasPendingChallenge: true});
 
         const {id: challengeID} = await admin.firestore().collection(COLLECTIONS.LIVE_GAMES).add({
             from,
@@ -29,20 +31,22 @@ export default async(request: express.Request, response: express.Response) => {
                 winScore: 0,
                 loseScore: 0
             },
-            finished: false
+            finished: false,
+            accepted: false
         });
         const fcmMessage = {
             token,
             notification: {
                 body: `${username} challenged you for a rated game!`,
-                title: "New challenge"
+                title: "New challenge!"
             },
-            data : {}
-        } as unknown as admin.messaging.Message
+            data : {
+                challengeID
+            }
+        } as admin.messaging.Message
         await admin.messaging().send(fcmMessage);
-        return response.status(200).send({code: 'success', message: 'challenge created', challengeID});
+        return response.status(200).send(createResponseMessage({code: RESPONSE_CODES.SUCCES, message: 'challenge created', payload: {challengeID}}));
     } catch(e) {
-        console.log(e);
-        return response.status(403).send({code: 'error', message: 'something went wrong'})
+        return response.status(403).send(createResponseMessage({code: RESPONSE_CODES.FIRESTORE_ERROR, message: e.message}));
     }
 }

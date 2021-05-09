@@ -1,6 +1,8 @@
 import * as express from 'express';
 import * as admin from 'firebase-admin';
 import { COLLECTIONS } from '../../constants/collections';
+import { RESPONSE_CODES } from '../../constants/responseCodes';
+import { createResponseMessage } from '../../utils/createResponseMessage';
 
 export default async(request: express.Request, response: express.Response) => {
     try {
@@ -27,9 +29,9 @@ export default async(request: express.Request, response: express.Response) => {
         } );
         await admin.firestore().collection(COLLECTIONS.HISTORY_GAMES).add(gameHistoryDocument);
         await batch.commit();
-        return response.status(200).send({code: 'success', message: 'game finished succesfully'});
+        return response.status(200).send(createResponseMessage({code: RESPONSE_CODES.SUCCES, message: 'challenge finished'}));
     } catch(e) {
-        return response.status(403).send({code: 'error', message: 'something went wrong'});
+        return response.status(403).send(createResponseMessage({code: RESPONSE_CODES.FIRESTORE_ERROR, message: e.message}));
     }
 
 

@@ -1,6 +1,8 @@
 import * as express from 'express';
 import * as admin from 'firebase-admin';
 import { COLLECTIONS } from '../../constants/collections';
+import { RESPONSE_CODES } from '../../constants/responseCodes';
+import { createResponseMessage } from '../../utils/createResponseMessage';
 
 const defaultTitles: string[] = [];
 
@@ -10,6 +12,7 @@ const baseUserDocument = {
     loses: 0,
     titles: defaultTitles,
     duringGame: false,
+    hasPendingChallenge: false
 }
 
 export default async(request: express.Request, response: express.Response): Promise<express.Response> => {
@@ -22,8 +25,8 @@ export default async(request: express.Request, response: express.Response): Prom
             disabled: false
         });
         await admin.auth().setCustomUserClaims(authID, {firestoreID});
-        return response.status(200).send({firestoreID});
+        return response.status(200).send(createResponseMessage({code: RESPONSE_CODES.SUCCES, message: 'Account created'}));
     } catch(e) {
-        return response.status(403).send('Something went wrong');
+        return response.status(403).send(createResponseMessage({code: RESPONSE_CODES.FIREBASE_ERROR, message: e.message}));
     }
 }
