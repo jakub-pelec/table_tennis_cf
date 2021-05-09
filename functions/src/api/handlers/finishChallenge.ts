@@ -31,6 +31,7 @@ export default async(request: express.Request, response: express.Response) => {
         await batch.commit();
         return response.status(200).send(createResponseMessage({code: RESPONSE_CODES.SUCCES, message: 'challenge finished'}));
     } catch(e) {
+        console.log(e);
         return response.status(403).send(createResponseMessage({code: RESPONSE_CODES.FIRESTORE_ERROR, message: e.message}));
     }
 

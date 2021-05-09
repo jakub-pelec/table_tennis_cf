@@ -23,6 +23,7 @@ export default async(request: express.Request, response: express.Response) => {
         const {id: challengeID} = await admin.firestore().collection(COLLECTIONS.LIVE_GAMES).add({
             from,
             to,
+            participants: [from, to],
             result: {
                 winnerId: null,
                 winnerNickname: '',
@@ -47,6 +48,7 @@ export default async(request: express.Request, response: express.Response) => {
         await admin.messaging().send(fcmMessage);
         return response.status(200).send(createResponseMessage({code: RESPONSE_CODES.SUCCES, message: 'challenge created', payload: {challengeID}}));
     } catch(e) {
+        console.log(e);
         return response.status(403).send(createResponseMessage({code: RESPONSE_CODES.FIRESTORE_ERROR, message: e.message}));
     }
 }
